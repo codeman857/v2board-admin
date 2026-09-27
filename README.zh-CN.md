@@ -48,6 +48,12 @@ pnpm dev                                      # http://localhost:5173
 pnpm build                                    # 构建内容在 dist/
 ```
 
+## 赞助商
+
+| 赞助商 | 介绍 |
+| :---: | --- |
+| <a href="https://t.me/awssb"><img src=".github/sponsors/awssb.png" alt="AWSSB" width="120"></a> | AWS 独享机租用，非日抛：c6in 高配机型，支持自动补机、自动换 IP。Telegram 联系 [@awssb](https://t.me/awssb) |
+
 ## Star History
 
 <a href="https://www.star-history.com/?repos=sinalphabeta%2Fv2board-admin&type=date&legend=top-left">

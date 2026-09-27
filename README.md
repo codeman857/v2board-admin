@@ -48,6 +48,12 @@ pnpm dev                                      # http://localhost:5173
 pnpm build                                    # output goes to dist/
 ```
 
+## Sponsors
+
+| Sponsor | Description |
+| :---: | --- |
+| <a href="https://t.me/awssb"><img src=".github/sponsors/awssb.png" alt="AWSSB" width="120"></a> | Dedicated AWS instances for rent, long-term rather than throwaway: high-spec c6in machines with automatic replacement and IP rotation. Contact [@awssb](https://t.me/awssb) on Telegram. |
+
 ## Star History
 
 <a href="https://www.star-history.com/?repos=sinalphabeta%2Fv2board-admin&type=date&legend=top-left">
