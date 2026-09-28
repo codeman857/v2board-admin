@@ -790,11 +790,10 @@
   }
   .ant-table-wrapper .ant-table-thead .ant-table-column-sorters > .ant-table-column-title {
     flex: none;
-    // antd 6 把标题提到下面这层之上，antd 3 的标题同样被这层盖住
-    z-index: auto;
   }
-  // 悬停：antd 3 在整个表头单元格上再叠一层 rgba(0, 0, 0, 0.04)（盖住标题与排序图标，过渡 0.3s），antd 6 只改单元格背景；
-  // 用 antd 6 本来就铺满单元格的 .ant-table-column-sorters::after 显示这层
+  // 悬停：antd 3 在整个表头单元格上再叠一层 rgba(0, 0, 0, 0.04)（过渡 0.3s），antd 6 只改单元格背景；
+  // 用 antd 6 本来就铺满单元格的 .ant-table-column-sorters::after 显示这层。这层盖住排序图标、在标题之下（antd 3 的标题
+  // position: relative 排在这层后面；antd 6 的标题 z-index: 1），标题里的问号提示才能悬停
   .ant-table-wrapper .ant-table-thead .ant-table-column-sorters::after {
     background: transparent;
     transition: all 0.3s;

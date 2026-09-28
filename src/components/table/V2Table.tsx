@@ -271,7 +271,8 @@ export function V2Table<T extends AnyRecord>({
 
   const table = (
     <Table<T>
-      showSorterTooltip={ui !== 'legacy'}
+      // 原版的排序列没有「点击升序」之类的提示（表头里有自己的问号提示，例如节点管理的「人数」）
+      showSorterTooltip={false}
       {...rest}
       columns={columns}
       rowKey={rowKey}
