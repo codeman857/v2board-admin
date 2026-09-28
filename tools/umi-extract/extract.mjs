@@ -21,6 +21,8 @@ const lines = source.split('\n')
 const decode = (text) =>
   text.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(Number.parseInt(hex, 16)))
 const fileNameOf = (id) => `${encodeURIComponent(id)}.js`
+// 拼进正则的文本：转义全部元字符（包括反斜杠）
+const escapeRegExp = (text) => text.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')
 
 // ---- 1. 按顶层 key 拆分模块（格式化后的 bundle：4 空格缩进的 `id: function(...)`）----
 const startRe = /^ {4}(?:"([^"]+)"|([A-Za-z0-9_$]+)): function\(([^)]*)\)/
@@ -39,7 +41,7 @@ for (const m of modules) {
   const requireName = m.params[2]
   const deps = new Set()
   if (requireName) {
-    const re = new RegExp(`\\b${requireName.replace(/\$/g, '\\$')}\\("([^"]+)"\\)`, 'g')
+    const re = new RegExp(`\\b${escapeRegExp(requireName)}\\("([^"]+)"\\)`, 'g')
     for (const d of text.matchAll(re)) deps.add(d[1])
   }
   const chinese = [...new Set([...text.matchAll(/"([^"\n]*[一-龥][^"\n]*)"/g)].map((x) => x[1]))]
