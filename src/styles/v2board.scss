@@ -88,6 +88,19 @@ a:not([href]):hover {
 .ant-tag:last-child {
   margin: 0;
 }
+// v2node 节点 ID：从右上角斜切下一条协议色（有意新增，原版只有纯红）。宽 10px、全高，与右边线约成 20°–30°（标签高 20–24px）；
+// 边框透明（TypeTag 的行内 style），背景从边框外沿画起，右边框和右下圆角也是协议色；方块宽度不变，数字可以压在两种颜色上
+.ant-tag.v2b-node-corner {
+  background-image: linear-gradient(
+    to bottom right,
+    transparent calc(50% - 0.5px),
+    var(--v2b-node-corner) calc(50% + 0.5px)
+  );
+  background-origin: border-box;
+  background-position: right top;
+  background-repeat: no-repeat;
+  background-size: 10px 100%;
+}
 .v2board-nav-mask {
   position: fixed;
   top: 0;

@@ -39,7 +39,7 @@ const NETWORK_PLACEHOLDERS = {
   xhttp: json4({ path: '/', host: 'xtls.github.io', mode: 'auto', extra: {} }),
 }
 
-const PROTOCOLS = [
+export const PROTOCOLS = [
   { value: 'anytls', label: 'AnyTLS' },
   { value: 'hysteria2', label: 'Hysteria2' },
   { value: 'shadowsocks', label: 'Shadowsocks' },

@@ -190,7 +190,7 @@ export default function ServerManagePage() {
       onFilter: (value, node) => node.type === String(value).toLowerCase(),
       render: (_: number, node) => (
         <span>
-          <TypeTag type={node.type}>{nodeId(node)}</TypeTag>
+          <TypeTag type={node.type} protocol={node.protocol}>{nodeId(node)}</TypeTag>
         </span>
       ),
     },
@@ -312,7 +312,7 @@ export default function ServerManagePage() {
       width: 150,
       render: (_: number, node) => (
         <span>
-          <TypeTag type={node.type}>{nodeId(node)}</TypeTag>
+          <TypeTag type={node.type} protocol={node.protocol}>{nodeId(node)}</TypeTag>
         </span>
       ),
     },
@@ -352,7 +352,7 @@ export default function ServerManagePage() {
                     className={`v2board_node_mobile ${node.parent_id ? 'child_node' : ''}`}
                     actions={[
                       <>
-                        <TypeTag type={node.type}>{nodeId(node)}</TypeTag>
+                        <TypeTag type={node.type} protocol={node.protocol}>{nodeId(node)}</TypeTag>
                         <Tag>
                           <UserOutlined /> {node.online || 0}
                         </Tag>
