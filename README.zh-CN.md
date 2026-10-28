@@ -46,6 +46,7 @@ pnpm install
 cp public/config.example.js config.local.js   # 填写后端地址和后台路径
 pnpm dev                                      # http://localhost:5173
 pnpm build                                    # 构建内容在 dist/
+V2B_EMBED=1 pnpm build                        # 内嵌到 v3board 时用：入口固定为 assets/admin.js、admin.css，由 v3board/build-admin.sh 调用；懒加载页面不要取名 index.tsx
 ```
 
 ## 赞助商

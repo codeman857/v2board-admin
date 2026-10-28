@@ -46,6 +46,7 @@ pnpm install
 cp public/config.example.js config.local.js   # set the backend URL and admin path
 pnpm dev                                      # http://localhost:5173
 pnpm build                                    # output goes to dist/
+V2B_EMBED=1 pnpm build                        # embedded build for v3board: fixed entry assets/admin.js and admin.css, used by v3board/build-admin.sh; do not name a lazy page index.tsx
 ```
 
 ## Sponsors

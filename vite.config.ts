@@ -63,6 +63,22 @@ export default defineConfig({
     target: 'es2023',
     // 页面按需加载（src/app/router.tsx）后最大的包约 600KB：仪表盘（含 ECharts）、React + antd 公共部分
     chunkSizeWarningLimit: 700,
+    // 内嵌到后端仓库（v3board 的 public/assets/admin，V2B_EMBED=1）时：入口固定为 assets/admin.js、assets/admin.css，
+    // 由后端模板加 ?v= 版本号刷新缓存，其余分包仍带哈希。默认（Cloudflare 等静态托管）全部带哈希，配合 _headers 长期缓存。
+    // 依赖入口 chunk 名为 index，不要给懒加载页面取名 index.tsx
+    ...(process.env.V2B_EMBED
+      ? {
+          rollupOptions: {
+            output: {
+              entryFileNames: 'assets/admin.js',
+              assetFileNames: (info: { names?: string[] }) =>
+                info.names?.some((name) => /^index(-.*)?\.css$/.test(name))
+                  ? 'assets/admin.css'
+                  : 'assets/[name]-[hash][extname]',
+            },
+          },
+        }
+      : {}),
   },
   test: {
     include: ['tests/**/*.test.ts'],
