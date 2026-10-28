@@ -29,7 +29,8 @@ interface OrderManageState {
   changeTable: (pagination: Partial<OrderPagination>) => void
   /** 修改佣金状态 */
   update: (tradeNo: string, key: string, value: unknown) => Promise<void>
-  paid: (tradeNo: string) => Promise<void>
+  /** 标记已支付；已取消订单补单时带上备注（v3board），返回是否成功（补单弹窗只在成功时关闭） */
+  paid: (tradeNo: string, remark?: string) => Promise<boolean>
   cancel: (tradeNo: string) => Promise<void>
   assign: (params: Record<string, unknown>, callback?: () => void) => Promise<void>
 }
@@ -78,7 +79,11 @@ export const useOrderManageStore = create<OrderManageState>((set, get) => {
     },
 
     update: (tradeNo, key, value) => run(updateOrder(tradeNo, key, value)),
-    paid: (tradeNo) => run(markOrderPaid(tradeNo)),
+    paid: async (tradeNo, remark) => {
+      const res = await markOrderPaid(tradeNo, remark)
+      if (res.code === 200) refetch()
+      return res.code === 200
+    },
     cancel: (tradeNo) => run(cancelOrder(tradeNo)),
 
     assign: async (params, callback) => {

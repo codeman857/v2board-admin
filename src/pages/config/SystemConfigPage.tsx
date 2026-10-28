@@ -4,6 +4,8 @@ import { usePlans } from '@/api/queries'
 import { V2Tabs } from '@/components/V2Tabs'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { useConfigManageStore, type ConfigGroup } from '@/stores/configManage'
+import { DomainRewriteRules } from './subscribeRules/DomainRewriteRules'
+import { NodeWhitelistRules } from './subscribeRules/NodeWhitelistRules'
 
 interface ConfigItemProps {
   title: ReactNode
@@ -73,7 +75,7 @@ function Alert({ children }: { children: ReactNode }) {
 //   - 「个性化」顶部的提示按新版的实际行为说明（原版写着前后分离部署时本页配置不生效）
 export default function SystemConfigPage() {
   const config = useConfigManageStore()
-  const { site, safe, subscribe, ticket, invite, frontend, server, email, telegram } = config
+  const { site, safe, subscribe, ticket, invite, frontend, server, email, email_remind: remind, telegram } = config
   const { data: plans = [] } = usePlans()
 
   useEffect(() => {
@@ -129,6 +131,20 @@ export default function SystemConfigPage() {
       placeholder="请输入"
       defaultValue={text(server[key])}
       onChange={(e) => set('server', key)(e.target.value)}
+    />
+  )
+  // v3board：邮件提醒的整数输入，不是数字（例如清空）时不修改、不保存，取值范围由后端校验
+  const remindInput = (key: string, addonAfter: string, placeholder: string) => (
+    <Input
+      addonAfter={addonAfter}
+      size="large"
+      type="number"
+      placeholder={placeholder}
+      defaultValue={text(remind[key])}
+      onChange={(e) => {
+        const value = integer(e.target.value)
+        if (value !== undefined) set('email_remind', key)(value)
+      }}
     />
   )
   const items = [
@@ -190,6 +206,17 @@ export default function SystemConfigPage() {
           <ConfigItem title="货币符号" description="仅用于展示使用，更改后系统中所有的货币单位都将发生变更。">
             {input('site', 'currency_symbol', '¥')}
           </ConfigItem>
+          {/* v3board：签到 */}
+          <ConfigItem title="签到功能" description="开启后用户可以通过每日签到获得随机流量奖励。">
+            {toggle('site', 'checkin_enable')}
+          </ConfigItem>
+          {on(site.checkin_enable) ? (
+            <ConfigItem title="运气签到" description="开启后用户可以使用运气签到，可能获得或扣除流量（-100%~+100%）。">
+              {toggle('site', 'lucky_checkin_enable')}
+            </ConfigItem>
+          ) : (
+            ''
+          )}
         </div>
       ),
     },
@@ -346,6 +373,67 @@ export default function SystemConfigPage() {
           ) : (
             ''
           )}
+          {/* v3board：订阅加密 */}
+          <ConfigItem
+            title="订阅加密"
+            description="开启后订阅内容将使用 AES-CBC 对称加密后输出（Base64）。IV 优先使用请求头 X-IV（每次随机），未携带时使用下方配置的固定 IV；密钥或 IV 缺失则不加密。"
+          >
+            {toggle('subscribe', 'subscribe_encrypt_enable')}
+          </ConfigItem>
+          {on(subscribe.subscribe_encrypt_enable) ? (
+            <>
+              <ConfigItem
+                isChildren
+                title="加密密钥（Key）"
+                description={
+                  <span>
+                    使用中间件时必须填入中间件密钥（须恰好16位，走 AES-128）；未使用中间件时填订阅加密密钥，推荐32位（走
+                    AES-256）。密钥需与客户端总控中配置的一致，可
+                    <a href="https://www.bejson.com/math/hex_gen/" target="_blank" rel="noopener noreferrer">
+                      点此在线生成
+                    </a>
+                    。
+                  </span>
+                }
+              >
+                {input('subscribe', 'subscribe_encrypt_key', '请输入加密密钥')}
+              </ConfigItem>
+              <ConfigItem
+                isChildren
+                title="固定 IV（可选）"
+                description={
+                  <span>
+                    请求未携带 X-IV 头时使用此固定 IV 加密，Atlas App 可不填。必须为16位，可
+                    <a href="https://www.bejson.com/math/hex_gen/" target="_blank" rel="noopener noreferrer">
+                      点此在线生成
+                    </a>
+                    。
+                  </span>
+                }
+              >
+                {input('subscribe', 'subscribe_encrypt_iv', '请输入固定IV（可留空）')}
+              </ConfigItem>
+              <ConfigItem
+                isChildren
+                title="User-Agent 过滤"
+                description="仅当拉取订阅请求的 User-Agent 包含以下任一关键词时才返回加密内容（不区分大小写），多个关键词用英文逗号或换行分隔。留空表示对所有客户端加密。"
+              >
+                {textarea('subscribe', 'subscribe_encrypt_ua', '如：AtlasApp,MyClient/1.0（留空则全部加密）', '2')}
+              </ConfigItem>
+              <ConfigItem
+                isChildren
+                title="套餐过滤"
+                description="仅对指定套餐的用户返回加密订阅，填写套餐ID，多个用英文逗号分隔。留空表示对所有套餐加密。"
+              >
+                {textarea('subscribe', 'subscribe_encrypt_plan_ids', '如：1,2,5（留空则全部套餐加密）', '2')}
+              </ConfigItem>
+            </>
+          ) : (
+            ''
+          )}
+          {/* v3board：订阅域名重写、节点 UA 白名单（独立读写，不走分组自动保存） */}
+          <DomainRewriteRules />
+          <NodeWhitelistRules />
         </div>
       ),
     },
@@ -551,6 +639,12 @@ export default function SystemConfigPage() {
               {numberInput('server_device_online_min_traffic', 'Kb')}
             </ConfigItem>
           </div>
+          {/* v3board：节点状态报告 */}
+          <div className="">
+            <ConfigItem title="节点状态报告频率" description="节点状态报告发送频率，单位为小时。设置为0则不发送报告">
+              {numberInput('server_status_report_hour', '小时')}
+            </ConfigItem>
+          </div>
           <ConfigItem title="全局设备数限制采用宽松模式" description="开启后同一IP地址使用多个节点只统计为一个设备">
             {toggle('server', 'device_limit_mode')}
           </ConfigItem>
@@ -599,6 +693,50 @@ export default function SystemConfigPage() {
               <Button loading={config.testSendMailLoading} type="primary" onClick={() => void config.testSendMail()}>
                 发送测试邮件
               </Button>
+            </ConfigItem>
+          </div>
+        </>
+      ),
+    },
+    // v3board 独有分组：邮件提醒（与 send:remindMail 配合）
+    {
+      key: 'email_remind',
+      label: '邮件提醒',
+      children: (
+        <>
+          <div className="block-content">
+            <div className="row">
+              <div className="col-lg-12">
+                <div className="alert alert-info" role="alert">
+                  <p className="mb-0">与定时任务 send:remindMail 配合（默认每日11:30）。到期/流量阈值在此配置。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="">
+            <ConfigItem
+              title="到期提醒提前天数"
+              description="倒计到期前多少天发送到期邮件（用户须开启到期提醒）。默认 1 天。"
+            >
+              {remindInput('remind_expire_days', '天', '1')}
+            </ConfigItem>
+            <ConfigItem
+              title="到期提醒次数"
+              description="在提醒天数范围内等间距发送的次数。如 3 天 3 次，则每 24 小时发送一次。默认 1 次。"
+            >
+              {remindInput('remind_expire_times', '次', '1')}
+            </ConfigItem>
+            <ConfigItem
+              title="流量提醒阈值（百分比）"
+              description="已用流量占套餐总流量 ≥ 该百分数时发送（用户须开启流量提醒，24 小时内不重复）。默认 95。"
+            >
+              {remindInput('remind_traffic_percent', '%', '95')}
+            </ConfigItem>
+            <ConfigItem title="注册后默认开启到期提醒" description="新用户注册后是否默认开启到期邮件提醒。">
+              {toggle('email_remind', 'remind_expire_default')}
+            </ConfigItem>
+            <ConfigItem title="注册后默认开启流量提醒" description="新用户注册后是否默认开启流量不足邮件提醒。">
+              {toggle('email_remind', 'remind_traffic_default')}
             </ConfigItem>
           </div>
         </>

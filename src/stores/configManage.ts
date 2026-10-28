@@ -30,6 +30,8 @@ export type ConfigGroup =
   | 'frontend'
   | 'server'
   | 'email'
+  // v3board 独有分组：邮件提醒
+  | 'email_remind'
   | 'telegram'
   | 'app'
   | 'safe'
@@ -81,6 +83,7 @@ export const useConfigManageStore = create<ConfigManageState>((set, get) => ({
   frontend: {},
   server: {},
   email: {},
+  email_remind: {},
   telegram: {},
   app: {},
   safe: {},

@@ -1,6 +1,7 @@
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
+  ExclamationCircleOutlined,
   InfoCircleOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons'
@@ -60,4 +61,7 @@ export const modal = {
   confirm: (config: ModalConfig) => ensure(modalApi).confirm({ ...legacyIcon(<QuestionCircleOutlined />), ...config }),
   success: (config: ModalConfig) => ensure(modalApi).success({ ...legacyIcon(<CheckCircleOutlined />), ...config }),
   error: (config: ModalConfig) => ensure(modalApi).error({ ...legacyIcon(<CloseCircleOutlined />), ...config }),
+  // v3board：补充 warning（上游只有 info / confirm / success / error）
+  warning: (config: ModalConfig) =>
+    ensure(modalApi).warning({ ...legacyIcon(<ExclamationCircleOutlined />), ...config }),
 }

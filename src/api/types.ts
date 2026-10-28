@@ -29,6 +29,10 @@ export interface StatOverride {
   last_month_income?: number
   commission_month_payout?: number
   commission_last_month_payout?: number
+  /** 以下为 v3board 追加：总用户数；累计 / 有效付费用户为「数量 / 百分比」字符串 */
+  total_user?: number
+  paid_user_total?: string
+  paid_user_active?: string
 }
 
 export interface StatOrderItem {
@@ -301,6 +305,8 @@ export interface AdminUser {
   alive_ip?: number | null
   ips?: string
   subscribe_url?: string
+  /** v3board：距下次流量重置的天数（null 为不重置或订阅无效），列表与 getUserInfoById 都有 */
+  reset_day?: number | null
   /** 以下只在 getUserInfoById 里有 */
   invite_user?: AdminUser
   invite_user_email?: string
@@ -336,6 +342,14 @@ export interface Order {
   created_at: number
   updated_at: number
   plan_name?: string
+  /** 以下为 v3board 追加。管理员备注：已取消订单补单时填写，列表与详情都有 */
+  remark?: string | null
+  /** 列表里的下单用户邮箱 */
+  user_email?: string | null
+  /** 列表里：变更订单是否有订阅覆盖记录 */
+  has_plan_change_log?: boolean
+  /** 详情里：订阅覆盖记录（覆盖前的订阅快照，带 plan_name / new_plan_name） */
+  plan_change_log?: NewPeriodLog | null
 }
 
 export interface Ticket {
@@ -393,4 +407,201 @@ export interface QueueWorkload {
   length: number
   wait: number
   processes: number
+}
+
+/**
+ * 提前续期 / 订阅覆盖记录（v3board 独有，newPeriodLog/fetch）：type 为 1 提前续期 / 2 订阅覆盖；
+ * 流量为字节，时间为 unix 秒；user_email / plan_name / new_plan_name / trade_no 由后端关联查出
+ */
+export interface NewPeriodLog {
+  id: number
+  user_id: number
+  type: number
+  order_id: number | null
+  plan_id: number | null
+  new_plan_id: number | null
+  deduct_days: number
+  old_expired_at: number
+  new_expired_at: number
+  u: number
+  d: number
+  transfer_enable: number
+  created_at: number
+  updated_at: number
+  user_email?: string | null
+  plan_name?: string | null
+  new_plan_name?: string | null
+  trade_no?: string | null
+}
+
+/** 订阅域名重写规则（v3board 独有，config/fetchDomainRewriteRules） */
+export interface DomainRewriteRule {
+  ua: string
+  domain: string
+  ip: string
+  remark?: string
+}
+
+/** 订阅节点 UA 白名单规则（v3board 独有，config/fetchSubscribeNodeWhitelistRules）；节点按 type + id 标识 */
+export interface NodeWhitelistRule {
+  ua: string
+  nodes: Array<{ type: NodeType; id: number }>
+  remark?: string
+}
+
+// 以下为风控中心（v3board 独有，insiderGuard/*）的类型：节点一律用 node_type + node_id 标识，时间为 unix 秒
+
+/** 节点异常记录；node_name 由后端按节点列表解析（overview、candidates、timeline 里都有） */
+export interface GuardIncident {
+  id: number
+  node_id: number
+  node_type: NodeType
+  node_name?: string | null
+  occurred_at: number
+  reason: string
+  admin_id: number
+  created_at: number
+}
+
+/** 概览（insiderGuard/overview） */
+export interface GuardOverview {
+  /** 近 24 小时事件数 */
+  recent_events: number
+  /** 人工审核记录总数 */
+  reviews: number
+  /** 限制中（拉订阅时下发假入口）的账号数 */
+  restricted: number
+  incidents: GuardIncident[]
+}
+
+/** 风险用户统计时段（小时） */
+export type GuardHours = 1 | 8 | 24 | 72 | 168
+
+/** 风险用户（insiderGuard/users），响应顶层另有 hours / threshold */
+export interface GuardRiskUser {
+  user_id: number
+  email: string | null
+  /** 时段内最近的小时桶的 UA（优先取有 UA 的桶，近似最近活动） */
+  ua: string | null
+  pulls: number
+  ips: number
+  score: number
+  high_risk: boolean
+  /** 是否被限制（拉订阅时下发假入口） */
+  restricted: boolean
+  last_seen: number
+}
+
+export type GuardEventType = 'login' | 'subscription'
+
+/**
+ * 审计事件（insiderGuard/events、userDetail 里的 events）：按小时汇总，同一用户、事件类型、小时、IP、UA 合并为一行；
+ * 列表按 last_at 倒序；email 只在 events 列表里有
+ */
+export interface GuardEvent {
+  id: number
+  user_id: number
+  email?: string | null
+  event_type: GuardEventType
+  ip_address: string
+  /** UA 的 md5；请求没带 UA 时为空串（此时 ua 为 null）；非空而 ua 仍为 null 说明 UA 字典没写成功 */
+  ua_hash: string
+  ua: string | null
+  /** 订阅事件下发的节点数 */
+  node_count: number | null
+  /** 该小时内的次数 */
+  times: number
+  /** 该小时内首次 / 最近一次的时间 */
+  first_at: number
+  last_at: number
+}
+
+/** 风险评分（userDetail 里的 risk）：只统计最近 1 小时 */
+export interface GuardRisk {
+  score: number
+  subscription_requests_1h: number
+  distinct_ips_1h: number
+  manual_review_required: boolean
+}
+
+/** 审核动作；restrict / release 由 insiderGuard/restrict、insiderGuard/release 写入（限制 = 拉订阅时下发假入口，不封号） */
+export type GuardReviewAction = 'watch' | 'clear' | 'restrict_recommended' | 'restrict' | 'release'
+
+export interface GuardReview {
+  id: number
+  user_id: number
+  admin_id: number
+  action: GuardReviewAction
+  reason: string
+  created_at: number
+}
+
+/** 用户风险详情（insiderGuard/userDetail） */
+export interface GuardUserDetail {
+  user_id: number
+  email: string
+  banned: number
+  risk: GuardRisk
+  /** 当前的限制记录（decoy_host 为该用户拉订阅时拿到的假入口地址）；未限制为 null */
+  restriction: { admin_id: number | null; reason: string; created_at: number; decoy_host: string } | null
+  events: GuardEvent[]
+  /** 被下发过的节点：每人每节点一行，times 为下发次数，first_at / last_at 为首次 / 最近下发时间 */
+  deliveries: Array<{
+    node_type: NodeType
+    node_id: number
+    node_name: string | null
+    times: number
+    first_at: number
+    last_at: number
+  }>
+  reviews: GuardReview[]
+}
+
+/** 节点异常的候选账号（insiderGuard/candidates）：异常前 24 小时被下发过该节点的账号，每人一行；caveat 文案由后端给 */
+export interface GuardCandidates {
+  incident: GuardIncident
+  candidates: Array<{ user_id: number; email: string | null; times: number; first_at: number; last_at: number }>
+  caveat: string
+}
+
+/** 节点 TCP 健康探测记录：只在状态变化时写入，状态不变时每小时补记一次 */
+export interface GuardHealthRecord {
+  id: number
+  node_id: number
+  node_type: NodeType
+  node_name?: string | null
+  status: 'up' | 'down'
+  latency_ms: number
+  error: string | null
+  created_at: number
+}
+
+/**
+ * 节点异常时间线（insiderGuard/timeline）：异常前 24 小时到后 6 小时的探测记录，以及按首次 / 最近下发时间估算
+ * 在该时段内被下发过该节点的账号（每人一行，按最近下发时间升序，最多 500 行；deliveries_total 为时段内的账号总数）
+ */
+export interface GuardTimeline {
+  incident: GuardIncident
+  health: GuardHealthRecord[]
+  deliveries: Array<{ user_id: number; email: string | null; times: number; first_at: number; last_at: number }>
+  deliveries_total: number
+  disclaimer: string
+}
+
+/** 最近的探测记录（insiderGuard/health） */
+export interface GuardHealth {
+  enabled: boolean
+  records: GuardHealthRecord[]
+  note: string
+}
+
+/** 立即探测一个节点的结果（insiderGuard/healthCheck） */
+export interface GuardHealthCheckResult {
+  node_type: NodeType
+  node_id: number
+  name?: string
+  status: 'disabled' | 'skipped' | 'up' | 'down' | 'error'
+  latency_ms?: number
+  error?: string | null
+  message?: string
 }

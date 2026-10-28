@@ -40,6 +40,8 @@ export function UserDrawer({ userId, children }: UserDrawerProps) {
   const user = useUserManageStore((s) => s.user)
   const updateLoading = useUserManageStore((s) => s.updateLoading)
   const { data: plans = [] } = usePlans(CACHED_ONLY)
+  // v3board：距下次流量重置天数（null 为不重置或订阅无效）
+  const resetDay = user.reset_day as number | null | undefined
 
   const show = () => {
     if (!userId) return
@@ -151,6 +153,11 @@ export function UserDrawer({ userId, children }: UserDrawerProps) {
                     style={{ width: '100%' }}
                     onChange={(date) => change('expired_at', date ? String(date.unix()) : null)}
                   />
+                  {resetDay !== null && resetDay !== undefined && (
+                    <small className="text-muted">
+                      {resetDay === 0 ? '不足 1 天后重置流量' : `距下次流量重置还有 ${resetDay} 天`}
+                    </small>
+                  )}
                 </div>
               </FormGroup>
               <FormGroup label="订阅计划">

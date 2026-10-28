@@ -8,10 +8,12 @@ import {
   FilterOutlined,
   MailOutlined,
   PlusOutlined,
+  QuestionCircleOutlined,
   ReloadOutlined,
   SelectOutlined,
   SolutionOutlined,
   StopOutlined,
+  SwapOutlined,
   UserAddOutlined,
   UsergroupAddOutlined,
 } from '@ant-design/icons'
@@ -169,6 +171,27 @@ export default function UserPage() {
         </Tag>
       ),
     },
+    {
+      // v3board：距下次流量重置天数
+      title: (
+        <span>
+          <Tooltip
+            placement="top"
+            title="距下次流量重置的天数，按套餐/站点设置的流量重置方式计算；不重置或订阅无效时显示 -"
+          >
+            流量重置 <QuestionCircleOutlined />
+          </Tooltip>
+        </span>
+      ),
+      dataIndex: 'reset_day',
+      key: 'reset_day',
+      render: (day: number | null | undefined) =>
+        day === null || day === undefined ? (
+          '-'
+        ) : (
+          <Tag color={day <= 3 ? 'orange' : 'blue'}>{day === 0 ? '不足 1 天' : `${day} 天后`}</Tag>
+        ),
+    },
     { title: '余额', dataIndex: 'balance', key: 'balance', sorter: true },
     { title: '佣金', dataIndex: 'commission_balance', key: 'commission_balance', sorter: true },
     {
@@ -240,6 +263,25 @@ export default function UserPage() {
                 label: (
                   <a>
                     <UsergroupAddOutlined /> TA的邀请
+                  </a>
+                ),
+              },
+              // v3board：提前续期记录、订阅覆盖记录
+              {
+                key: 'newPeriodLog',
+                onClick: () => navigate(`/newPeriodLog?email=${encodeURIComponent(user.email)}`),
+                label: (
+                  <a>
+                    <ReloadOutlined /> TA的提前续期记录
+                  </a>
+                ),
+              },
+              {
+                key: 'planChangeLog',
+                onClick: () => navigate(`/planChangeLog?email=${encodeURIComponent(user.email)}`),
+                label: (
+                  <a>
+                    <SwapOutlined /> TA的订阅覆盖记录
                   </a>
                 ),
               },
@@ -391,7 +433,7 @@ export default function UserPage() {
               dataSource={users}
               pagination={{ ...pagination, ...paginationProps(ui) }}
               columns={columns}
-              scroll={{ x: 1500 }}
+              scroll={{ x: 1600 }} // v3board：多了「流量重置」列，原为 1500
               onChange={onTableChange}
               onRowContextMenu={setRecord}
               contextMenu={
@@ -432,6 +474,22 @@ export default function UserPage() {
                   >
                     <a>
                       <UsergroupAddOutlined /> TA的邀请
+                    </a>
+                  </li>
+                  <li
+                    className="ant-dropdown-menu-item"
+                    onClick={() => navigate(`/newPeriodLog?email=${encodeURIComponent(record?.email ?? '')}`)}
+                  >
+                    <a>
+                      <ReloadOutlined /> TA的提前续期记录
+                    </a>
+                  </li>
+                  <li
+                    className="ant-dropdown-menu-item"
+                    onClick={() => navigate(`/planChangeLog?email=${encodeURIComponent(record?.email ?? '')}`)}
+                  >
+                    <a>
+                      <SwapOutlined /> TA的订阅覆盖记录
                     </a>
                   </li>
                   <li className="ant-dropdown-menu-item">

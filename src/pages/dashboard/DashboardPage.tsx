@@ -145,8 +145,9 @@ export default function DashboardPage() {
                 </div>
                 <div className="pr-4 pr-sm-5 pl-0 pl-sm-3 ">
                   <i className="fa fa-user fa-2x text-gray-light float-right" />
+                  {/* v3board：原版为「实时注册」 */}
                   <div className="text-muted mb-1" style={{ width: '120px' }}>
-                    实时注册
+                    今日注册
                   </div>
                   <div className="display-4 text-black font-w300 mb-2">
                     {stat.day_register_total ? stat.day_register_total : '0'}
@@ -183,6 +184,19 @@ export default function DashboardPage() {
                 <div className="px-4 px-sm-5 border-start">
                   <p className="fs-3 text-dark mb-0">{stat.month_register_total || '-'}</p>
                   <p className="text-muted mb-0">本月新增用户</p>
+                </div>
+                {/* v3board：总用户、累计 / 有效付费用户（stat/getOverride 追加的字段） */}
+                <div className="px-4 px-sm-5 border-start">
+                  <p className="fs-3 text-dark mb-0">{stat.total_user || '0'}</p>
+                  <p className="text-muted mb-0">总用户</p>
+                </div>
+                <div className="px-4 px-sm-5 border-start">
+                  <p className="fs-3 text-dark mb-0">{stat.paid_user_total || '0'}</p>
+                  <p className="text-muted mb-0">累计付费用户</p>
+                </div>
+                <div className="px-4 px-sm-5 border-start">
+                  <p className="fs-3 text-dark mb-0">{stat.paid_user_active || '0'}</p>
+                  <p className="text-muted mb-0">有效付费用户</p>
                 </div>
               </div>
             </div>

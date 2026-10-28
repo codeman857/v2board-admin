@@ -8,7 +8,9 @@ export const getOrderDetail = (id: number) => post<Order>(adminPath('/order/deta
 /** 修改佣金状态 */
 export const updateOrder = (tradeNo: string, key: string, value: unknown) =>
   post<boolean>(adminPath('/order/update'), { trade_no: tradeNo, [key]: value })
-export const markOrderPaid = (tradeNo: string) => post<boolean>(adminPath('/order/paid'), { trade_no: tradeNo })
+/** 标记已支付；已取消订单补单时带上备注（v3board） */
+export const markOrderPaid = (tradeNo: string, remark?: string) =>
+  post<boolean>(adminPath('/order/paid'), remark ? { trade_no: tradeNo, remark } : { trade_no: tradeNo })
 export const cancelOrder = (tradeNo: string) => post<boolean>(adminPath('/order/cancel'), { trade_no: tradeNo })
 /** 分配订单（金额单位为分） */
 export const assignOrder = (params: object) => post<string>(adminPath('/order/assign'), params)

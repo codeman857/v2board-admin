@@ -5,7 +5,7 @@
 // 打开动画里突然从加载图标撑高到完整内容，看起来在抖。新版第一次打开时先读取，读完再打开，弹窗带着完整内容展开；
 // 超过 OPEN_DELAY 还没读完时仍按原版先打开、显示加载图标
 import { LoadingOutlined } from '@ant-design/icons'
-import { Col, Divider, Modal, Row, Tooltip } from 'antd'
+import { Col, Divider, Modal, Row, Tag, Tooltip } from 'antd'
 import { useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { CACHED_ONLY, usePlans } from '@/api/queries'
@@ -13,9 +13,10 @@ import { getOrderDetail } from '@/api/services/order'
 import { getUserInfoById } from '@/api/services/user'
 import type { AdminUser, Order } from '@/api/types'
 import { JsLink } from '@/components/JsLink'
+import { remainBytes } from '@/pages/newPeriodLog/planChange'
 import { useUserManageStore } from '@/stores/userManage'
 import { COMMISSION_STATUS_TEXT, ORDER_STATUS_TEXT, PERIOD_TEXT, type PeriodKey } from '@/utils/constants'
-import { formatTime } from '@/utils/format'
+import { formatBytes, formatTime } from '@/utils/format'
 
 // antd 3 的 gutter={[16, 16]}：列上下各 8px 内边距、行上移 8px（原版行的 marginBottom 设为 0）。
 // antd 3 的行是浮动布局，后一行的列被上一行的浮动列挡住，实际不上移，只有每组（开头或分隔线后）的第一行上移；
@@ -98,12 +99,46 @@ export function OrderDetailModal({ orderId, children }: { orderId: number; child
             <Line label="订单状态">{ORDER_STATUS_TEXT[order.status as number]}</Line>
             <Line label="订阅计划">{plans.find((plan) => plan.id === order.plan_id)?.name}</Line>
             <Line label="回调单号">{order.callback_no ? order.callback_no : '-'}</Line>
+            {/* v3board：已取消订单补单时的管理员备注 */}
+            {order.remark ? (
+              <Line label="管理员备注">
+                <Tag color="orange">补单</Tag> {order.remark}
+              </Line>
+            ) : (
+              ''
+            )}
             <Divider />
             <Line label="支付金额" first>{yuan(order.total_amount)}</Line>
             <Line label="余额支付">{yuan(order.balance_amount)}</Line>
             <Line label="优惠金额">{yuan(order.discount_amount)}</Line>
             <Line label="退回金额">{yuan(order.refund_amount)}</Line>
             <Line label="折抵金额">{yuan(order.surplus_amount)}</Line>
+            {/* v3board：变更订单覆盖前的订阅快照 */}
+            {order.plan_change_log ? (
+              <div>
+                <Divider />
+                <Line label="覆盖前订阅" first>
+                  {order.plan_change_log.plan_name || '-'}
+                </Line>
+                <Line label="覆盖前到期">
+                  {order.plan_change_log.old_expired_at
+                    ? formatTime(Number(order.plan_change_log.old_expired_at), 'YYYY-MM-DD HH:mm:ss')
+                    : '一次性'}
+                </Line>
+                {/* 与订阅覆盖记录页同一种格式 */}
+                <Line label="覆盖前剩余流量">
+                  {formatBytes(remainBytes(order.plan_change_log))} /{' '}
+                  {formatBytes(order.plan_change_log.transfer_enable)}
+                </Line>
+                <Line label="覆盖后到期">
+                  {order.plan_change_log.new_expired_at
+                    ? formatTime(Number(order.plan_change_log.new_expired_at), 'YYYY-MM-DD HH:mm:ss')
+                    : '一次性'}
+                </Line>
+              </div>
+            ) : (
+              ''
+            )}
             <Divider />
             <Line label="创建时间" first>{formatTime(Number(order.created_at), 'YYYY-MM-DD HH:mm:ss')}</Line>
             <Line label="更新时间">{formatTime(Number(order.updated_at), 'YYYY-MM-DD HH:mm:ss')}</Line>

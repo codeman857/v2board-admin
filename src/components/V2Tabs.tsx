@@ -23,20 +23,28 @@ export interface V2TabItem {
 
 interface V2TabsProps {
   items: V2TabItem[]
+  /** 受控：当前标签由父组件持有（配合 onChange）；不传时组件自己记住选中的标签 */
+  activeKey?: string
   defaultActiveKey?: string
   size?: 'large'
   onChange?: (key: string) => void
 }
 
-export function V2Tabs({ items, defaultActiveKey, size, onChange }: V2TabsProps) {
-  const [activeKey, setActiveKey] = useState(() => defaultActiveKey ?? items[0]?.key ?? '')
+export function V2Tabs({ items, activeKey: controlledKey, defaultActiveKey, size, onChange }: V2TabsProps) {
+  const [innerKey, setInnerKey] = useState(() => controlledKey ?? defaultActiveKey ?? items[0]?.key ?? '')
+  const activeKey = controlledKey ?? innerKey
   const [visited, setVisited] = useState(() => new Set([activeKey]))
+  // 受控模式下父组件直接切换标签：把它记为访问过，切走后仍保持渲染（渲染期间按 props 调整 state 的写法）
+  if (!visited.has(activeKey)) setVisited(new Set(visited).add(activeKey))
   const activeIndex = items.findIndex((item) => item.key === activeKey)
 
   const select = (key: string) => {
     if (key === activeKey) return
-    setVisited((keys) => new Set(keys).add(key))
-    setActiveKey(key)
+    // 受控时由父组件在 onChange 里切换，再由上面的渲染期同步记为访问过
+    if (controlledKey === undefined) {
+      setVisited((keys) => new Set(keys).add(key))
+      setInnerKey(key)
+    }
     onChange?.(key)
   }
 
@@ -62,6 +70,8 @@ export function V2Tabs({ items, defaultActiveKey, size, onChange }: V2TabsProps)
               key={item.key}
               role="tabpanel"
               aria-hidden={active ? 'false' : 'true'}
+              // 非活动标签页里的按钮 / 下拉 / 文本域不可聚焦、不可点击（React 19 支持布尔值）
+              inert={!active}
               className={`ant-tabs-tabpane ant-tabs-tabpane-${active ? 'active' : 'inactive'}`}
             >
               {visited.has(item.key) && item.children}
